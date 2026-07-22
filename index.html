@@ -1,0 +1,862 @@
+<!doctype html>
+<!--
+  Viernes de Pádel — Dole Shared Services
+  Diseño e integración: Nelson Navarro · nelson.navarro@dole.com
+  Backend RSVP: bot.navhera.com/padel  ·  Mapa/rutas: Google Maps  ·  Clima: Open-Meteo
+-->
+<html lang="es">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>Viernes de Pádel — Dole Shared Services</title>
+<meta name="description" content="Nos vamos a jugar pádel con el equipo. Elegí la cancha, mirá la ruta, el clima y los precios, y confirmá que venís."/>
+<meta property="og:title" content="Viernes de Pádel · Dole"/>
+<meta property="og:description" content="Elegí cancha, mirá ruta y clima en vivo, y confirmá que venís."/>
+<meta name="theme-color" content="#0F1113"/>
+
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@300;400;500;600;700&family=Sora:wght@200;300;400;500&display=swap" rel="stylesheet"/>
+
+<style>
+  :root{
+    --bg:#0F1113; --bg2:#15181B;
+    --glass:rgba(30,34,39,.5); --glass-2:rgba(20,23,27,.6);
+    --line:rgba(255,255,255,.11); --line-soft:rgba(255,255,255,.055);
+    --ink:#EDEFF1; --ink-soft:#9AA3AC; --ink-mute:#5E666E;
+    --silver:#CBD5DD; --steel:#8C9AA6; --lime:#C6F24E; --gold:#E8C86A;
+    --maxw:1180px;
+    --disp:'Sora',-apple-system,system-ui,sans-serif;
+    --sans:'Manrope',-apple-system,system-ui,sans-serif;
+  }
+  *{ box-sizing:border-box; }
+  html{ scroll-behavior:smooth; -webkit-text-size-adjust:100%; }
+  @media (prefers-reduced-motion: reduce){ html{ scroll-behavior:auto; } }
+  body{ margin:0; color:var(--ink); font-family:var(--sans); font-weight:400; font-size:17px; line-height:1.62;
+    -webkit-font-smoothing:antialiased; overflow-x:hidden;
+    background:
+      radial-gradient(90% 60% at 82% -5%, rgba(203,213,221,.06), transparent 60%),
+      radial-gradient(80% 60% at 8% 105%, rgba(140,154,166,.05), transparent 60%),
+      var(--bg); }
+  a{ color:inherit; }
+  ::selection{ background:var(--lime); color:#14171A; }
+
+  .bg-grid{ position:fixed; inset:0; z-index:0; pointer-events:none; opacity:.5;
+    background-image:radial-gradient(rgba(255,255,255,.045) 1px, transparent 1.4px); background-size:28px 28px;
+    -webkit-mask-image:radial-gradient(120% 120% at 50% 30%, #000 55%, transparent 100%);
+            mask-image:radial-gradient(120% 120% at 50% 30%, #000 55%, transparent 100%); }
+  #spot{ position:fixed; width:620px; height:620px; border-radius:50%; z-index:0; pointer-events:none; opacity:0;
+    background:radial-gradient(circle, rgba(203,213,221,.07), transparent 62%); transform:translate(-50%,-50%); transition:opacity .6s; }
+
+  .wrap{ max-width:var(--maxw); margin:0 auto; padding:0 26px; position:relative; z-index:3; }
+
+  .eyebrow{ font-family:var(--sans); text-transform:uppercase; letter-spacing:.34em; font-weight:600; font-size:.7rem; color:var(--ink-soft); }
+  h1,h2,h3{ margin:0; font-family:var(--disp); font-weight:300; line-height:1.04; letter-spacing:-.02em; }
+  p{ max-width:60ch; }
+  .tnum{ font-variant-numeric:tabular-nums; }
+
+  .glass{ background:var(--glass); -webkit-backdrop-filter:blur(18px) saturate(120%); backdrop-filter:blur(18px) saturate(120%);
+    border:1px solid var(--line); box-shadow:0 30px 70px -34px rgba(0,0,0,.75); }
+
+  /* nav */
+  .nav{ position:fixed; top:0; left:0; right:0; z-index:40; transition:background .3s, border-color .3s; border-bottom:1px solid transparent; }
+  .nav.stuck{ background:rgba(15,17,19,.72); -webkit-backdrop-filter:blur(14px); backdrop-filter:blur(14px); border-bottom-color:var(--line); }
+  .nav .wrap{ display:flex; align-items:center; justify-content:space-between; padding:18px 26px; }
+  .brand{ display:flex; align-items:center; gap:12px; font-size:.8rem; letter-spacing:.14em; text-transform:uppercase; color:var(--ink-soft); font-weight:500; }
+  .brand .mk{ width:22px; height:22px; border:1px solid var(--ink-soft); border-radius:6px; position:relative; flex:none; }
+  .brand .mk::after{ content:""; position:absolute; left:50%; top:4px; bottom:4px; width:1px; background:var(--ink-soft); transform:translateX(-50%); }
+  .nav-cta{ font-size:.78rem; letter-spacing:.1em; text-transform:uppercase; font-weight:600; text-decoration:none; color:var(--ink);
+    border:1px solid var(--line); padding:10px 18px; border-radius:8px; transition:.25s; }
+  .nav-cta:hover{ border-color:var(--silver); background:rgba(203,213,221,.06); }
+  @media (max-width:600px){ .brand span.t{ display:none; } }
+
+  /* hero */
+  .hero{ position:relative; min-height:100svh; display:flex; align-items:center; padding:120px 0 90px; overflow:hidden; }
+  .hero-court{ position:absolute; inset:0; z-index:0; display:flex; align-items:center; justify-content:center; pointer-events:none;
+    -webkit-mask-image:radial-gradient(80% 80% at 60% 45%, #000 30%, transparent 78%);
+            mask-image:radial-gradient(80% 80% at 60% 45%, #000 30%, transparent 78%); }
+  .hero-court svg{ width:112%; height:auto; opacity:.16; }
+  .hero .wrap{ width:100%; }
+  .hero .eyebrow{ opacity:0; animation:up .7s .05s forwards; }
+  .h1{ margin-top:16px; font-size:clamp(3.2rem,10vw,8.2rem); font-weight:200; letter-spacing:-.035em; }
+  .h1 .ln{ display:block; overflow:hidden; }
+  .h1 .ln span{ display:block; transform:translateY(108%); animation:up 1s cubic-bezier(.16,1,.3,1) forwards; }
+  .h1 .ln:nth-child(1) span{ animation-delay:.12s; }
+  .h1 .ln:nth-child(2) span{ animation-delay:.26s; font-weight:400; color:var(--silver); }
+  .hero-sub{ display:flex; flex-wrap:wrap; gap:12px; margin-top:38px; opacity:0; animation:up .8s .5s forwards; }
+  .stat{ border-radius:12px; padding:14px 22px; min-width:118px; }
+  .stat .k{ text-transform:uppercase; letter-spacing:.16em; font-size:.64rem; color:var(--ink-mute); font-weight:600; }
+  .stat .v{ font-family:var(--disp); font-weight:300; font-size:1.6rem; color:var(--ink); margin-top:4px; line-height:1; }
+  .stat .v em{ font-style:normal; color:var(--ink-soft); font-size:.95rem; }
+  .stat.live .k::after{ content:""; display:inline-block; width:6px; height:6px; border-radius:50%; background:var(--lime); margin-left:7px; box-shadow:0 0 8px var(--lime); animation:blink 1.6s infinite; }
+  @keyframes blink{ 0%,100%{opacity:1} 50%{opacity:.25} }
+  .hero-lead{ max-width:52ch; margin-top:28px; color:var(--ink-soft); font-size:1.1rem; opacity:0; animation:up .8s .62s forwards; }
+  .hero-lead b{ color:var(--ink); font-weight:600; }
+  .hero-actions{ margin-top:30px; display:flex; gap:12px; flex-wrap:wrap; opacity:0; animation:up .8s .74s forwards; align-items:center; }
+  .cdN{ font-family:var(--disp); font-weight:300; }
+
+  .scrollcue{ position:absolute; bottom:22px; left:50%; transform:translateX(-50%); z-index:3;
+    text-transform:uppercase; letter-spacing:.22em; font-size:.62rem; color:var(--ink-mute); font-weight:600;
+    display:flex; flex-direction:column; align-items:center; gap:8px; }
+  .scrollcue .b{ width:7px; height:7px; border-radius:50%; background:var(--silver); animation:cue 1.5s infinite; }
+  @keyframes cue{ 0%,100%{ transform:translateY(0); opacity:1; } 50%{ transform:translateY(7px); opacity:.4; } }
+
+  .btn{ font-family:var(--sans); font-weight:600; letter-spacing:.04em; font-size:.92rem;
+    padding:13px 24px; border-radius:10px; cursor:pointer; border:1px solid var(--line); position:relative; overflow:hidden;
+    transition:transform .2s, color .25s, border-color .25s, background .25s; color:var(--ink); background:transparent; text-decoration:none; display:inline-block; }
+  .btn.solid{ background:var(--silver); color:#14171A; border-color:var(--silver); }
+  .btn.solid:hover{ transform:translateY(-2px); background:#DEE4E9; }
+  .btn.line:hover{ border-color:var(--silver); background:rgba(203,213,221,.07); transform:translateY(-2px); }
+  .btn:focus-visible{ outline:2px solid var(--lime); outline-offset:3px; }
+  .btn:disabled{ border-color:var(--line); background:transparent; color:var(--ink-mute); cursor:not-allowed; transform:none; }
+  .btn.full{ width:100%; display:block; text-align:center; }
+
+  .divider{ height:1px; background:var(--line); position:relative; z-index:3; max-width:var(--maxw); margin:0 auto; }
+
+  .marquee{ overflow:hidden; white-space:nowrap; padding:16px 0; border-top:1px solid var(--line); border-bottom:1px solid var(--line); position:relative; z-index:3; }
+  .marquee .tk{ display:inline-block; animation:slide 34s linear infinite; font-family:var(--disp); font-weight:300; font-size:1.1rem; color:var(--ink-mute); letter-spacing:.02em; }
+  .marquee .tk span{ margin:0 22px; }
+  .marquee .tk .o{ color:var(--ink-soft); }
+  @keyframes slide{ to{ transform:translateX(-50%); } }
+  @media (prefers-reduced-motion: reduce){ .marquee .tk,.scrollcue .b{ animation:none; }
+    .h1 .ln span,.hero .eyebrow,.hero-sub,.hero-lead,.hero-actions{ animation:none; opacity:1; transform:none; } }
+
+  section{ position:relative; padding:clamp(72px,10vh,118px) 0; }
+  .kick{ display:flex; align-items:baseline; gap:16px; margin-bottom:20px; }
+  .kick .n{ font-family:var(--disp); font-weight:200; color:var(--ink-soft); font-size:1.2rem; letter-spacing:.05em; }
+  .kick .r{ height:1px; flex:1; max-width:70px; background:var(--line); align-self:center; }
+  .sec-title{ font-size:clamp(2.2rem,5.5vw,4rem); font-weight:200; letter-spacing:-.03em; }
+  .sec-title .v{ color:var(--silver); font-weight:300; }
+  .sec-desc{ color:var(--ink-soft); margin-top:16px; font-size:1.08rem; max-width:58ch; }
+
+  .reveal{ opacity:0; transform:translateY(34px); transition:opacity .7s cubic-bezier(.16,1,.3,1), transform .7s cubic-bezier(.16,1,.3,1); }
+  .reveal.in{ opacity:1; transform:none; }
+  @media (prefers-reduced-motion: reduce){ .reveal{ opacity:1; transform:none; } }
+
+  /* timeline */
+  .timeline{ display:grid; grid-template-columns:repeat(4,1fr); gap:14px; margin-top:44px; }
+  @media (max-width:760px){ .timeline{ grid-template-columns:1fr 1fr; } }
+  .tl{ border-radius:16px; padding:26px 24px; position:relative; transition:transform .3s, border-color .3s; }
+  .tl:hover{ transform:translateY(-4px); border-color:var(--silver); }
+  .tl .tt{ font-family:var(--disp); font-weight:200; font-size:2.6rem; line-height:1; letter-spacing:-.02em; }
+  .tl .tt em{ font-style:normal; color:var(--ink-soft); font-size:1rem; }
+  .tl .tk{ text-transform:uppercase; letter-spacing:.12em; font-size:.68rem; color:var(--silver); margin-top:14px; font-weight:600; }
+  .tl .td{ color:var(--ink-soft); font-size:.92rem; margin-top:6px; }
+  .tl .dotline{ position:absolute; top:38px; right:-7px; width:14px; height:1px; background:var(--line); }
+  @media (max-width:760px){ .tl .dotline{ display:none; } }
+
+  .facts{ display:grid; grid-template-columns:repeat(4,1fr); gap:14px; margin-top:20px; }
+  @media (max-width:720px){ .facts{ grid-template-columns:1fr 1fr; } }
+  .fact{ border-radius:14px; padding:26px 24px; }
+  .fact .fn{ font-family:var(--disp); font-weight:200; font-size:2.8rem; line-height:1; color:var(--ink); }
+  .fact .fl{ text-transform:uppercase; letter-spacing:.1em; font-size:.72rem; color:var(--ink-soft); margin-top:10px; font-weight:600; }
+
+  /* ranking sort bar */
+  .sortbar{ display:flex; gap:8px; flex-wrap:wrap; margin-top:34px; }
+  .sortbar button{ font-family:var(--sans); font-weight:600; font-size:.78rem; letter-spacing:.02em; color:var(--ink-soft);
+    background:transparent; border:1px solid var(--line); padding:9px 16px; border-radius:999px; cursor:pointer; transition:.22s; }
+  .sortbar button:hover{ border-color:var(--silver); color:var(--ink); }
+  .sortbar button[aria-pressed="true"]{ background:var(--silver); color:#14171A; border-color:var(--silver); }
+
+  /* map + list */
+  .map-wrap{ display:grid; grid-template-columns:1.32fr .68fr; margin-top:26px; border-radius:18px; overflow:hidden; }
+  @media (max-width:980px){ .map-wrap{ grid-template-columns:1fr; } }
+  .map-cell{ position:relative; }
+  #map{ height:640px; width:100%; background:var(--bg2); }
+  @media (max-width:980px){ #map{ height:440px; } }
+  .map-fallback{ position:absolute; inset:0; display:flex; align-items:center; justify-content:center; text-align:center; padding:30px;
+    color:var(--ink-soft); font-size:.95rem; z-index:1; }
+  .map-legend{ position:absolute; left:14px; bottom:14px; z-index:5; display:flex; gap:14px; padding:9px 13px; border-radius:10px;
+    background:rgba(12,14,16,.78); -webkit-backdrop-filter:blur(8px); backdrop-filter:blur(8px); border:1px solid var(--line);
+    text-transform:uppercase; letter-spacing:.1em; font-size:.62rem; font-weight:600; pointer-events:none; }
+  .map-legend .lg{ display:flex; align-items:center; gap:6px; color:var(--ink-soft); }
+  .map-legend .d{ width:9px; height:9px; border-radius:50%; }
+  .wxchip{ position:absolute; right:14px; top:14px; z-index:5; display:flex; align-items:center; gap:11px; padding:11px 15px; border-radius:12px;
+    background:rgba(12,14,16,.82); -webkit-backdrop-filter:blur(10px); backdrop-filter:blur(10px); border:1px solid var(--line); min-width:190px; }
+  .wxchip .ic{ font-size:1.7rem; line-height:1; }
+  .wxchip .wk{ text-transform:uppercase; letter-spacing:.14em; font-size:.56rem; color:var(--ink-mute); font-weight:700; }
+  .wxchip .wv{ font-family:var(--disp); font-weight:300; font-size:1.15rem; color:var(--ink); margin-top:2px; }
+  .wxchip .wv small{ color:var(--ink-soft); font-size:.72rem; }
+
+  .map-side{ display:flex; flex-direction:column; border-left:1px solid var(--line); background:var(--glass-2); }
+  @media (max-width:980px){ .map-side{ border-left:0; border-top:1px solid var(--line); } }
+  .map-side-hd{ padding:16px 22px; border-bottom:1px solid var(--line); display:flex; justify-content:space-between; align-items:center; }
+  .map-side-hd .t{ font-family:var(--disp); font-weight:300; font-size:1.1rem; }
+  .tourbtn{ font-family:var(--sans); font-weight:600; font-size:.74rem; color:var(--ink); background:transparent; border:1px solid var(--line);
+    padding:8px 14px; border-radius:8px; cursor:pointer; transition:.25s; }
+  .tourbtn:hover{ border-color:var(--silver); background:rgba(203,213,221,.06); }
+  .clublist{ overflow-y:auto; max-height:560px; }
+  @media (max-width:980px){ .clublist{ max-height:none; } }
+  .club{ width:100%; text-align:left; background:transparent; border:0; border-bottom:1px solid var(--line-soft); color:var(--ink);
+    padding:17px 20px; cursor:pointer; display:flex; gap:14px; align-items:flex-start; font:inherit; transition:background .25s; }
+  .club:hover{ background:rgba(255,255,255,.035); }
+  .club:focus-visible{ outline:2px solid var(--lime); outline-offset:-2px; }
+  .club[aria-selected="true"]{ background:linear-gradient(90deg,rgba(203,213,221,.12),transparent); }
+  .club .rk{ font-family:var(--disp); font-weight:300; font-size:1.05rem; width:34px; height:34px; flex:none; border-radius:9px; border:1px solid var(--line);
+    display:flex; align-items:center; justify-content:center; color:var(--ink-soft); }
+  .club[data-rank="1"] .rk{ background:var(--gold); color:#14171A; border-color:var(--gold); font-weight:500; }
+  .club[data-rank="2"] .rk{ color:var(--silver); border-color:var(--silver); }
+  .club .cbody{ flex:1; min-width:0; }
+  .club .cname{ font-family:var(--disp); font-weight:400; font-size:1.18rem; line-height:1.1; display:flex; align-items:center; gap:8px; flex-wrap:wrap; }
+  .club .badge{ font-family:var(--sans); font-size:.58rem; font-weight:700; letter-spacing:.1em; text-transform:uppercase; padding:3px 7px; border-radius:6px;
+    border:1px solid var(--line); color:var(--ink-soft); }
+  .club .badge.cov{ color:var(--lime); border-color:rgba(198,242,78,.4); }
+  .club .cmeta{ font-size:.84rem; color:var(--ink-soft); margin-top:5px; line-height:1.45; }
+  .club .crow{ display:flex; gap:14px; margin-top:10px; flex-wrap:wrap; }
+  .club .chip{ font-size:.72rem; color:var(--ink-soft); display:flex; align-items:center; gap:5px; }
+  .club .chip b{ color:var(--ink); font-weight:600; font-family:var(--disp); }
+  .club .stars{ color:var(--gold); letter-spacing:1px; font-size:.8rem; }
+  .club .clinks{ margin-top:11px; display:flex; gap:9px; flex-wrap:wrap; }
+  .club .clinks a{ font-weight:600; letter-spacing:.03em; font-size:.7rem; text-decoration:none; color:var(--ink-soft);
+    border:1px solid var(--line); padding:5px 11px; border-radius:7px; transition:.2s; }
+  .club .clinks a:hover{ border-color:var(--silver); color:var(--ink); }
+  .club .cdist{ text-align:right; flex:none; }
+  .club .cdist b{ font-family:var(--disp); font-weight:300; font-size:1.35rem; line-height:1; }
+  .club .cdist small{ display:block; text-transform:uppercase; font-size:.56rem; letter-spacing:.12em; color:var(--ink-mute); margin-top:3px; font-weight:600; }
+  .map-note{ font-size:.9rem; color:var(--ink-soft); margin-top:16px; }
+  .map-note b{ color:var(--ink); font-weight:600; }
+
+  /* food */
+  .food-grid{ display:grid; grid-template-columns:repeat(3,1fr); gap:16px; margin-top:42px; }
+  @media (max-width:900px){ .food-grid{ grid-template-columns:1fr 1fr; } }
+  @media (max-width:600px){ .food-grid{ grid-template-columns:1fr; } }
+  .food{ border-radius:16px; padding:24px; cursor:pointer; transition:transform .3s, border-color .3s; }
+  .food:hover{ transform:translateY(-4px); border-color:var(--silver); }
+  .food[aria-selected="true"]{ border-color:var(--silver); box-shadow:inset 0 0 0 1px var(--silver), 0 30px 60px -30px rgba(0,0,0,.7); }
+  .food .frow{ display:flex; justify-content:space-between; align-items:baseline; gap:10px; }
+  .food .fk{ text-transform:uppercase; letter-spacing:.16em; font-size:.64rem; color:var(--steel); font-weight:600; }
+  .food .fpr{ font-size:.72rem; color:var(--gold); font-weight:700; letter-spacing:.05em; }
+  .food h3{ font-family:var(--disp); font-weight:400; font-size:1.5rem; margin-top:9px; }
+  .food .fz{ font-size:.78rem; color:var(--ink-mute); margin-top:4px; font-weight:500; text-transform:uppercase; letter-spacing:.08em; }
+  .food .fmeta{ display:flex; gap:12px; margin-top:12px; font-size:.74rem; color:var(--ink-soft); align-items:center; }
+  .food .fmeta .stars{ color:var(--gold); }
+  .food p{ color:var(--ink-soft); font-size:.92rem; margin:12px 0 0; }
+  .food .fl{ display:inline-flex; align-items:center; gap:6px; margin-top:16px; font-weight:600; letter-spacing:.03em; font-size:.74rem; color:var(--ink); text-decoration:none; border-bottom:1px solid var(--line); padding-bottom:2px; }
+  .food .fl:hover{ border-color:var(--silver); }
+
+  /* live feed */
+  .feed{ display:flex; align-items:center; gap:12px; flex-wrap:wrap; margin-top:30px; padding:16px 20px; border-radius:14px; }
+  .feed .fh{ text-transform:uppercase; letter-spacing:.14em; font-size:.64rem; font-weight:700; color:var(--ink-soft); display:flex; align-items:center; gap:8px; }
+  .feed .fh .dt{ width:7px; height:7px; border-radius:50%; background:var(--lime); box-shadow:0 0 8px var(--lime); animation:blink 1.6s infinite; }
+  .feed .chips{ display:flex; gap:8px; flex-wrap:wrap; }
+  .pchip{ display:flex; align-items:center; gap:7px; padding:6px 12px; border-radius:999px; border:1px solid var(--line); font-size:.82rem; font-weight:600; }
+  .pchip .av{ width:20px; height:20px; border-radius:50%; background:var(--silver); color:#14171A; display:flex; align-items:center; justify-content:center; font-size:.64rem; font-weight:700; }
+  .pchip small{ color:var(--ink-soft); font-weight:500; }
+  .feed .empty{ color:var(--ink-mute); font-size:.9rem; }
+
+  /* confirm */
+  .confirm{ border-radius:18px; overflow:hidden; margin-top:28px; }
+  .confirm-grid{ display:grid; grid-template-columns:1fr 1fr; }
+  @media (max-width:860px){ .confirm-grid{ grid-template-columns:1fr; } }
+  .cc-l{ padding:clamp(28px,4vw,44px); border-right:1px solid var(--line); }
+  @media (max-width:860px){ .cc-l{ border-right:0; border-bottom:1px solid var(--line); } }
+  .cc-r{ padding:clamp(28px,4vw,44px); background:rgba(10,12,14,.35); }
+  .field{ margin-bottom:20px; }
+  .field .fl{ display:block; text-transform:uppercase; letter-spacing:.14em; font-size:.68rem; color:var(--ink-soft); margin-bottom:9px; font-weight:600; }
+  .field input, .field select, .field textarea{ width:100%; font-family:var(--sans); font-weight:400; font-size:1.02rem; color:var(--ink); background:rgba(8,10,12,.5);
+    border:1px solid var(--line); border-radius:10px; padding:13px 14px; transition:border-color .25s; }
+  .field textarea{ resize:vertical; min-height:64px; }
+  .field input:focus, .field select:focus, .field textarea:focus{ outline:none; border-color:var(--silver); }
+  .field select option{ background:var(--bg2); }
+  .hp{ position:absolute; left:-9999px; opacity:0; }
+
+  .summary .row{ display:flex; justify-content:space-between; gap:14px; padding:14px 0; border-bottom:1px solid var(--line-soft); }
+  .summary .row .k{ text-transform:uppercase; letter-spacing:.12em; font-size:.68rem; color:var(--ink-mute); align-self:center; font-weight:600; }
+  .summary .row .v{ font-family:var(--disp); font-weight:400; font-size:1.05rem; text-align:right; }
+  .summary .row .v.empty{ color:var(--ink-mute); font-weight:300; }
+
+  .agree{ display:flex; gap:14px; align-items:center; margin:24px 0 20px; }
+  .switch{ position:relative; width:56px; height:31px; flex:none; }
+  .switch input{ position:absolute; inset:0; opacity:0; margin:0; cursor:pointer; }
+  .switch .tr{ position:absolute; inset:0; border:1px solid var(--line); border-radius:999px; background:rgba(8,10,12,.6); transition:.25s; pointer-events:none; }
+  .switch .kn{ position:absolute; top:4px; left:4px; width:21px; height:21px; border-radius:50%; background:var(--ink-mute); transition:.25s; pointer-events:none; }
+  .switch input:checked ~ .tr{ background:var(--lime); border-color:var(--lime); }
+  .switch input:checked ~ .kn{ transform:translateX(25px); background:#14171A; }
+  .switch input:focus-visible ~ .tr{ outline:2px solid var(--lime); outline-offset:2px; }
+  .agree .lbl{ font-family:var(--disp); font-weight:400; font-size:1.2rem; cursor:pointer; }
+  .agree .lbl small{ display:block; font-family:var(--sans); font-weight:400; font-size:.86rem; color:var(--ink-soft); letter-spacing:0; margin-top:2px; }
+
+  .hint{ font-size:.84rem; color:var(--ink-mute); text-align:center; margin-top:14px; }
+  .hint.err{ color:#F2A0A0; }
+  .done{ text-align:center; }
+  .done .dt{ font-family:var(--disp); font-weight:300; font-size:2rem; }
+  .done .dt em{ font-style:normal; color:var(--lime); }
+  .spin{ display:inline-block; width:15px; height:15px; border:2px solid rgba(20,23,26,.35); border-top-color:#14171A; border-radius:50%; animation:sp .7s linear infinite; vertical-align:-2px; margin-right:8px; }
+  @keyframes sp{ to{ transform:rotate(360deg); } }
+
+  footer{ border-top:1px solid var(--line); padding:44px 0 60px; position:relative; z-index:3; }
+  footer .f{ display:flex; justify-content:space-between; gap:18px; flex-wrap:wrap; align-items:center;
+    text-transform:uppercase; letter-spacing:.1em; font-size:.74rem; color:var(--ink-mute); font-weight:600; }
+  footer a{ color:var(--ink-soft); text-decoration:none; }
+
+  @keyframes up{ to{ opacity:1; transform:none; } }
+
+  /* google maps info window dark */
+  .gm-style .gm-style-iw-c{ background:var(--bg2)!important; border:1px solid var(--line); border-radius:12px!important; box-shadow:0 20px 50px -20px rgba(0,0,0,.8)!important; padding:0!important; }
+  .gm-style .gm-style-iw-tc::after{ background:var(--bg2)!important; }
+  .gm-style .gm-style-iw-d{ overflow:hidden!important; }
+  .gm-style-iw button{ filter:invert(.85); }
+  .iw{ padding:14px 16px; font-family:var(--sans); color:var(--ink); min-width:180px; }
+  .iw .n{ font-family:var(--disp); font-weight:400; font-size:1.15rem; }
+  .iw .m{ font-size:.82rem; color:var(--ink-soft); margin-top:4px; }
+</style>
+</head>
+<body>
+<div class="bg-grid"></div>
+<div id="spot"></div>
+
+<nav class="nav" id="nav">
+  <div class="wrap">
+    <div class="brand"><span class="mk"></span><span class="t">Viernes de Pádel · Dole</span></div>
+    <a class="nav-cta" href="#confirm">Confirmar</a>
+  </div>
+</nav>
+
+<!-- HERO -->
+<header class="hero">
+  <div class="hero-court" aria-hidden="true">
+    <svg viewBox="0 0 1000 560" fill="none" stroke="#cbd5dd" stroke-width="1.2">
+      <rect x="60" y="60" width="880" height="440" rx="3"/>
+      <line x1="500" y1="60" x2="500" y2="500"/>
+      <line x1="60" y1="280" x2="940" y2="280"/>
+      <line x1="230" y1="60" x2="230" y2="500"/>
+      <line x1="770" y1="60" x2="770" y2="500"/>
+      <line x1="230" y1="280" x2="770" y2="280" stroke-dasharray="2 10"/>
+    </svg>
+  </div>
+  <div class="wrap">
+    <span class="eyebrow">Salida del equipo · Viernes 31 de julio</span>
+    <h1 class="h1">
+      <span class="ln"><span>Viernes</span></span>
+      <span class="ln"><span>de pádel</span></span>
+    </h1>
+    <div class="hero-sub">
+      <div class="stat glass"><div class="k">Salimos de Dole</div><div class="v tnum">4:45 <em>pm</em></div></div>
+      <div class="stat glass"><div class="k">En cancha</div><div class="v tnum">5:30 <em>pm</em></div></div>
+      <div class="stat glass live"><div class="k">Faltan</div><div class="v tnum" id="cd">—</div></div>
+      <div class="stat glass live"><div class="k">Confirmados</div><div class="v tnum" id="cCount">0</div></div>
+    </div>
+    <p class="hero-lead">Terminamos de trabajar y nos vamos a jugar pádel; después vamos a tomar y comer algo. Elijan la cancha — acá tienen el mapa, la ruta, el clima y los precios de cada una. <b>No se preocupen por la pala, yo las llevo.</b> Solo ropa deportiva; si tienen tenis de suela plana, mejor.</p>
+    <div class="hero-actions">
+      <a class="btn solid" href="#canchas">Ver el ranking de canchas</a>
+      <a class="btn line" href="#confirm">Confirmen que vienen</a>
+    </div>
+  </div>
+  <div class="scrollcue"><span>Bajen</span><span class="b"></span></div>
+</header>
+
+<div class="marquee" aria-hidden="true">
+  <div class="tk">
+    <span>Padel Zone</span><span class="o">·</span><span>Volea</span><span class="o">·</span><span>Puro Pádel</span><span class="o">·</span><span>Art Pádel</span><span class="o">·</span><span>Furati</span><span class="o">·</span>
+    <span>Padel Zone</span><span class="o">·</span><span>Volea</span><span class="o">·</span><span>Puro Pádel</span><span class="o">·</span><span>Art Pádel</span><span class="o">·</span><span>Furati</span><span class="o">·</span>
+  </div>
+</div>
+
+<!-- PLAN -->
+<section id="plan">
+  <div class="wrap">
+    <div class="reveal">
+      <div class="kick"><span class="n">01</span><span class="r"></span><span class="eyebrow">El plan</span></div>
+      <h2 class="sec-title">Cómo va <span class="v">la tarde</span></h2>
+      <p class="sec-desc">Salimos todos juntos de Dole a las <b>4:45 pm</b> y jugamos a las <b>5:30 pm</b>. La reserva la hago yo — ustedes solo eligen dónde y confirman.</p>
+    </div>
+    <div class="timeline">
+      <div class="tl glass reveal"><div class="tt tnum">4:45<em> pm</em></div><span class="dotline"></span><div class="tk">Salida</div><div class="td">Nos vamos juntos desde Dole, Sabana Norte.</div></div>
+      <div class="tl glass reveal"><div class="tt tnum">5:15<em> pm</em></div><span class="dotline"></span><div class="tk">Llegada</div><div class="td">Calentamos y armamos las parejas.</div></div>
+      <div class="tl glass reveal"><div class="tt tnum">5:30<em> pm</em></div><span class="dotline"></span><div class="tk">Partido</div><div class="td">A jugar. Reserva de 90 min por cancha.</div></div>
+      <div class="tl glass reveal"><div class="tt tnum">7:00<em> pm</em></div><div class="tk">After</div><div class="td">A tomar y comer algo — ustedes eligen dónde.</div></div>
+    </div>
+    <div class="facts reveal">
+      <div class="fact glass"><div class="fn tnum" data-count="5">5</div><div class="fl">Canchas rankeadas</div></div>
+      <div class="fact glass"><div class="fn tnum" data-count="6">6</div><div class="fl">Lugares para el after</div></div>
+      <div class="fact glass"><div class="fn">90'</div><div class="fl">Minutos de juego</div></div>
+      <div class="fact glass"><div class="fn" id="rainFact">—</div><div class="fl">Prob. de lluvia 5:30pm</div></div>
+    </div>
+  </div>
+</section>
+
+<div class="divider" aria-hidden="true"></div>
+
+<!-- MAP / RANKING -->
+<section id="canchas">
+  <div class="wrap">
+    <div class="reveal">
+      <div class="kick"><span class="n">02</span><span class="r"></span><span class="eyebrow">Las canchas · ranking</span></div>
+      <h2 class="sec-title">Elijan <span class="v">dónde jugar</span></h2>
+      <p class="sec-desc">Ranking en vivo con rating, precio de la tarde del viernes, canchas y tiempo real de manejo desde la oficina. Toquen una para ver la ruta y el clima a la hora del partido.</p>
+      <div class="sortbar" id="sortbar" role="group" aria-label="Ordenar canchas">
+        <button data-sort="score" aria-pressed="true">Recomendado</button>
+        <button data-sort="dist" aria-pressed="false">Más cerca</button>
+        <button data-sort="price" aria-pressed="false">Más barato</button>
+        <button data-sort="rating" aria-pressed="false">Mejor rating</button>
+      </div>
+    </div>
+    <div class="map-wrap glass reveal">
+      <div class="map-cell">
+        <div id="map" role="application" aria-label="Mapa de canchas de pádel"></div>
+        <div class="map-fallback" id="mapFallback">Cargando el mapa…</div>
+        <div class="wxchip glass" id="wxchip" style="display:none"><span class="ic" id="wxIc">⛅</span><div><div class="wk">Clima en la cancha · 5:30pm</div><div class="wv" id="wxVal">—</div></div></div>
+        <div class="map-legend">
+          <span class="lg"><span class="d" style="background:#EDEFF1"></span>Salida</span>
+          <span class="lg"><span class="d" style="background:var(--silver)"></span>Cancha</span>
+          <span class="lg"><span class="d" style="background:var(--steel)"></span>After</span>
+        </div>
+      </div>
+      <div class="map-side">
+        <div class="map-side-hd"><span class="t">Ranking de canchas</span><button class="tourbtn" id="tourBtn" type="button">Ver todas</button></div>
+        <div class="clublist" id="clubList"></div>
+      </div>
+    </div>
+    <p class="map-note">Precios <b>aproximados</b> para el turno pico del viernes (90 min por cancha, dividido entre 4). La reserva la hago yo (Nelson) — ustedes solo <b>eligen dónde jugar</b>.</p>
+  </div>
+</section>
+
+<div class="divider" aria-hidden="true"></div>
+
+<!-- AFTER -->
+<section id="after">
+  <div class="wrap">
+    <div class="reveal">
+      <div class="kick"><span class="n">03</span><span class="r"></span><span class="eyebrow">Después del partido</span></div>
+      <h2 class="sec-title">Luego, ¿para dónde <span class="v">nos vamos?</span></h2>
+      <p class="sec-desc">Terminamos de jugar y nos vamos a tomar y comer algo. Varias opciones por Escazú, Sabana y Lindora — toquen una y queda marcada en el mapa con la ruta.</p>
+    </div>
+    <div class="food-grid" id="foodGrid"></div>
+  </div>
+</section>
+
+<div class="divider" aria-hidden="true"></div>
+
+<!-- CONFIRM -->
+<section id="confirm">
+  <div class="wrap">
+    <div class="reveal">
+      <div class="kick"><span class="n">04</span><span class="r"></span><span class="eyebrow">Confirmá</span></div>
+      <h2 class="sec-title">¿Vienen <span class="v">o no?</span></h2>
+      <p class="sec-desc">Pongan su nombre y lo que prefieren. Al confirmar, la respuesta le llega a Nelson al toque — y su nombre aparece abajo en vivo.</p>
+    </div>
+
+    <div class="feed glass reveal" id="feed">
+      <span class="fh"><span class="dt"></span>Ya se apuntaron</span>
+      <div class="chips" id="feedChips"><span class="empty">Sé el primero en confirmar 👀</span></div>
+    </div>
+
+    <div class="confirm glass reveal">
+      <div class="confirm-grid">
+        <div class="cc-l">
+          <input class="hp" type="text" id="fWebsite" tabindex="-1" autocomplete="off" aria-hidden="true"/>
+          <div class="field"><label class="fl" for="fName">Su nombre</label><input id="fName" type="text" placeholder="Ej. Jose Mata" autocomplete="name"/></div>
+          <div class="field"><label class="fl" for="fTime">¿Cómo llega?</label>
+            <select id="fTime">
+              <option value="Salgo con el grupo (4:45 pm)">Salgo con el grupo (4:45 pm)</option>
+              <option value="Llego directo a la cancha (5:30 pm)">Llego directo a la cancha (5:30 pm)</option>
+              <option value="Me acomodo al grupo">Me acomodo al grupo</option>
+            </select></div>
+          <div class="field"><label class="fl" for="fCourt">Cancha que prefiere</label><select id="fCourt"><option value="">— Elija en el mapa o acá —</option></select></div>
+          <div class="field"><label class="fl" for="fFood">Después vamos a…</label><select id="fFood"><option value="">— Elija abajo o acá —</option></select></div>
+          <div class="field"><label class="fl" for="fNote">¿Algo más? (opcional)</label><textarea id="fNote" placeholder="Ej. llevo a alguien más / llego 10 min tarde"></textarea></div>
+          <div class="agree"><span class="switch"><input id="fAgree" type="checkbox" aria-label="Confirmo que voy"/><span class="tr"></span><span class="kn"></span></span>
+            <label for="fAgree" class="lbl">Ahí estaré<small>Actívelo para confirmar que viene.</small></label></div>
+        </div>
+        <div class="cc-r">
+          <div class="summary" id="summary">
+            <div class="row"><span class="k">Nombre</span><span class="v empty" data-k="name">Sin llenar</span></div>
+            <div class="row"><span class="k">Llegada</span><span class="v" data-k="time">Salgo con el grupo (4:45 pm)</span></div>
+            <div class="row"><span class="k">Cancha</span><span class="v empty" data-k="court">Sin elegir</span></div>
+            <div class="row"><span class="k">Después</span><span class="v empty" data-k="food">Sin elegir</span></div>
+            <div class="row"><span class="k">Estado</span><span class="v empty" data-k="agree">Pendiente</span></div>
+          </div>
+          <div id="ctaZone" style="margin-top:24px;">
+            <button class="btn solid full" id="sendBtn" type="button" disabled>Confirmar</button>
+            <button class="btn line full" id="copyBtn" type="button" style="margin-top:12px">Copiar mi respuesta</button>
+            <div class="hint" id="hint">Ponga su nombre y active “Ahí estaré”.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <div class="wrap f">
+    <span>Viernes de Pádel · Team Building</span>
+    <span>Hecho por Nelson · Sabana Norte</span>
+  </div>
+</footer>
+
+<script>
+(function(){
+  "use strict";
+  var reduce = matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+  // ---- config ----
+  // Las llaves NO van en el repo — se sirven desde el droplet en /padel/config
+  var GMAPS_KEY = "";
+  var API = "https://bot.navhera.com/padel";
+  var ORG = "2597nelson@gmail.com";
+  var W3F_KEY = ""; // Web3Forms (client-side) -> correo a Nelson (se carga desde /config)
+  var PLAY_DATE = "2026-07-31";       // viernes
+  var PLAY_HOUR = 17;                 // 5pm bucket for weather
+  var DEPART = new Date("2026-07-31T17:15:00-06:00"); // para tráfico en Directions
+
+  var ORIGIN = { name:"Dole", ll:{lat:9.9435,lng:-84.1050} };
+
+  // ---- data (curado de fuentes reales: Playtomic / padelcr.com / clubes) ----
+  var COURTS = [
+    { id:"volea", name:"Volea", area:"Guachipelín, Escazú", ll:{lat:9.9262,lng:-84.1470},
+      rating:4.8, courts:7, covered:true, priceCourt:60, players:4,
+      meta:"6 pistas techadas + 1 exterior · 4 de pickleball · Mondo Turf · parqueo 80 · resto",
+      book:"https://playtomic.com/clubs/volea-padel-pickleball-club", wa:"50687761000" },
+    { id:"padelzone", name:"Padel Zone", area:"Guachipelín, Escazú", ll:{lat:9.9290,lng:-84.1420},
+      rating:4.7, courts:4, covered:false, priceCourt:48, players:4,
+      meta:"4 pistas · bar y restaurante · boutique · 150 m sur del McDonald's de Guachipelín",
+      book:"https://playtomic.com/es/clubs/padel-zone-escazu", wa:"" },
+    { id:"puropadel", name:"Puro Pádel", area:"Escazú", ll:{lat:9.9215,lng:-84.1495},
+      rating:4.6, courts:3, covered:true, priceCourt:52, players:4,
+      meta:"3 pistas premium · lounge con pantalla · pet friendly · tienda · 50% dcto. universitarios",
+      book:"https://directory.playtomic.io/costa-rica/", wa:"" },
+    { id:"furati", name:"Furati (Puro Pádel Oeste)", area:"Pozos, Santa Ana", ll:{lat:9.9575,lng:-84.1880},
+      rating:4.7, courts:8, covered:true, priceCourt:54, players:4,
+      meta:"8 pistas profesionales techadas · Complejo Deportivo Furati · el complejo más grande",
+      book:"https://playtomic.com/clubs/puro-padel-1234", wa:"" },
+    { id:"artpadel", name:"Art Pádel", area:"San Joaquín de Flores, Heredia", ll:{lat:9.9960,lng:-84.1555},
+      rating:4.5, courts:4, covered:true, priceCourt:44, players:4,
+      meta:"4 canchas techadas · café y tienda · 300 m del cruce de Valencia",
+      book:"https://directory.playtomic.io/costa-rica/", wa:"" }
+  ];
+  var FOOD = [
+    { id:"yardhouse", name:"Yard House", zone:"Avenida Escazú", ll:{lat:9.9185,lng:-84.1360}, kind:"Cervezas y comida", price:"$$", rating:4.4,
+      desc:"Un montón de cervezas de barril y comida americana. El clásico para cerrar.", map:"Yard House Avenida Escazu Costa Rica" },
+    { id:"hops", name:"Hops Craft Beer House", zone:"Escazú", ll:{lat:9.9250,lng:-84.1330}, kind:"Cervecería artesanal", price:"$$", rating:4.5,
+      desc:"Para los cerveceros: artesanales locales e importadas, con buena picada.", map:"Hops Craft Beer House Escazu Costa Rica" },
+    { id:"porkys", name:"Porky's Bar & Grill", zone:"Escazú", ll:{lat:9.9270,lng:-84.1400}, kind:"Bar deportivo", price:"$$", rating:4.3,
+      desc:"Ambiente de bar deportivo, cócteles y buena parrilla, con pantallas.", map:"Porkys Bar and Grill Escazu Costa Rica" },
+    { id:"stiefel", name:"Stiefel Pub", zone:"Rohrmoser / Sabana", ll:{lat:9.9430,lng:-84.1150}, kind:"Cerveza + pizza", price:"$$", rating:4.6,
+      desc:"Cerveza artesanal y pizza al horno de leña, cerquita de la oficina. Relajado.", map:"Stiefel Pub Rohrmoser Sabana San Jose" },
+    { id:"taphouse", name:"Tap House", zone:"City Place, Santa Ana", ll:{lat:9.9330,lng:-84.1830}, kind:"30+ cervezas de barril", price:"$$", rating:4.4,
+      desc:"Más de 30 cervezas de barril, BBQ y hamburguesas estilo Texas.", map:"Tap House City Place Santa Ana Costa Rica" },
+    { id:"productc", name:"Product C", zone:"Escazú", ll:{lat:9.9200,lng:-84.1390}, kind:"Mariscos y ceviche", price:"$$$", rating:4.5,
+      desc:"Ceviches, ostras y buena birra. Si queremos algo distinto después de jugar.", map:"Product C Escazu Costa Rica" }
+  ];
+
+  var ALL={}; COURTS.concat(FOOD).forEach(function(d){ ALL[d.id]=d; });
+  var isFood={}; FOOD.forEach(function(d){ isFood[d.id]=true; });
+
+  // haversine fallback (km) — reemplazado por Directions cuando carga
+  function hav(a,b){ var R=6371,dLat=(b.lat-a.lat)*Math.PI/180,dLng=(b.lng-a.lng)*Math.PI/180;
+    var s=Math.sin(dLat/2)*Math.sin(dLat/2)+Math.cos(a.lat*Math.PI/180)*Math.cos(b.lat*Math.PI/180)*Math.sin(dLng/2)*Math.sin(dLng/2);
+    return R*2*Math.atan2(Math.sqrt(s),Math.sqrt(1-s)); }
+  COURTS.forEach(function(d){ d.km = hav(ORIGIN.ll,d.ll)*1.35; d.mins = null; d.kmReal = null; });
+
+  function stars(r){ var full=Math.round(r); var s=""; for(var i=0;i<5;i++) s+= i<full?"★":"☆"; return s; }
+  function perPlayer(d){ return Math.round(d.priceCourt/d.players); }
+
+  // ---- ranking score ----
+  function computeScores(){
+    var maxP=0,minP=1e9,maxM=0,minM=1e9,maxC=0;
+    COURTS.forEach(function(d){ var m=d.mins||d.km*2; maxP=Math.max(maxP,d.priceCourt); minP=Math.min(minP,d.priceCourt);
+      maxM=Math.max(maxM,m); minM=Math.min(minM,m); maxC=Math.max(maxC,d.courts); });
+    COURTS.forEach(function(d){
+      var m=d.mins||d.km*2;
+      var nRating=(d.rating-4.3)/(4.9-4.3);                       // 0..1
+      var nValue = maxP===minP?1:(maxP-d.priceCourt)/(maxP-minP); // barato mejor
+      var nProx  = maxM===minM?1:(maxM-m)/(maxM-minM);            // cerca mejor
+      var nCap   = d.courts/maxC*0.7 + (d.covered?0.3:0);         // capacidad+techo
+      d.score = (nRating*0.40 + nValue*0.22 + nProx*0.20 + nCap*0.18)*100;
+    });
+  }
+
+  var state={ name:"",time:"Salgo con el grupo (4:45 pm)",court:"",courtId:"",food:"",foodId:"",note:"",agree:false };
+  var sortMode="score";
+
+  // =========================== GOOGLE MAPS ===========================
+  var map, dirService, dirRenderer, markers={}, originMarker, iw, gmReady=false;
+  var DARK=[{elementType:"geometry",stylers:[{color:"#12151a"}]},{elementType:"labels.icon",stylers:[{visibility:"off"}]},
+    {elementType:"labels.text.fill",stylers:[{color:"#8C9AA6"}]},{elementType:"labels.text.stroke",stylers:[{color:"#0f1113"}]},
+    {featureType:"administrative",elementType:"geometry",stylers:[{color:"#2a2f36"}]},
+    {featureType:"poi",stylers:[{visibility:"off"}]},
+    {featureType:"road",elementType:"geometry",stylers:[{color:"#20252b"}]},
+    {featureType:"road",elementType:"labels.text.fill",stylers:[{color:"#6b7480"}]},
+    {featureType:"road.highway",elementType:"geometry",stylers:[{color:"#2b323a"}]},
+    {featureType:"transit",stylers:[{visibility:"off"}]},
+    {featureType:"water",elementType:"geometry",stylers:[{color:"#0c0f13"}]}];
+
+  function dotIcon(color,size){ size=size||18; return { url:"data:image/svg+xml;charset=UTF-8,"+encodeURIComponent(
+    '<svg xmlns="http://www.w3.org/2000/svg" width="'+size+'" height="'+size+'" viewBox="0 0 '+size+' '+size+'">'+
+    '<circle cx="'+size/2+'" cy="'+size/2+'" r="'+(size/2-2)+'" fill="'+color+'" stroke="#0f1113" stroke-width="2"/></svg>'),
+    scaledSize:new google.maps.Size(size,size), anchor:new google.maps.Point(size/2,size/2) }; }
+
+  window.initMap = function(){
+    gmReady=true;
+    var fb=document.getElementById('mapFallback'); if(fb) fb.style.display='none';
+    map=new google.maps.Map(document.getElementById('map'),{
+      center:{lat:9.95,lng:-84.14}, zoom:13, styles:DARK, disableDefaultUI:true,
+      zoomControl:true, gestureHandling:"cooperative", backgroundColor:"#0c0e10" });
+    dirService=new google.maps.DirectionsService();
+    dirRenderer=new google.maps.DirectionsRenderer({ map:map, suppressMarkers:true,
+      polylineOptions:{ strokeColor:"#CBD5DD", strokeWeight:4, strokeOpacity:.9 } });
+    iw=new google.maps.InfoWindow();
+
+    originMarker=new google.maps.Marker({ position:ORIGIN.ll, map:map, icon:dotIcon("#EDEFF1",22), zIndex:999, title:"Dole" });
+    originMarker.addListener('click',function(){ iw.setContent('<div class="iw"><div class="n">Dole</div><div class="m">Punto de salida · Sabana Norte</div></div>'); iw.open(map,originMarker); });
+
+    COURTS.concat(FOOD).forEach(function(d){
+      var mk=new google.maps.Marker({ position:d.ll, map:map, icon:dotIcon(isFood[d.id]?"#8C9AA6":"#CBD5DD",18), title:d.name });
+      mk.addListener('click',function(){ selectItem(d.id); });
+      markers[d.id]=mk;
+    });
+
+    // tiempos reales de manejo (con tráfico a la hora de salida)
+    fetchDriveTimes(function(){ computeScores(); renderList(); });
+
+    // ruta inicial a la mejor cancha
+    setTimeout(function(){ if(!state.courtId){ computeScores(); renderList(); selectItem(sortedCourts()[0].id, true); } }, 300);
+  };
+  window.gmError = function(){ var fb=document.getElementById('mapFallback');
+    if(fb){ fb.style.display='flex'; fb.innerHTML='El mapa no cargó (falta o falla la API key de Google). El ranking y las rutas por link siguen funcionando.'; } };
+
+  function fetchDriveTimes(done){
+    var pending=COURTS.length;
+    var opts=(DEPART>new Date())?{ departureTime:DEPART, trafficModel:google.maps.TrafficModel.BEST_GUESS }:null;
+    COURTS.forEach(function(d){
+      dirService.route({ origin:ORIGIN.ll, destination:d.ll, travelMode:google.maps.TravelMode.DRIVING, drivingOptions:opts||undefined },
+        function(res,status){
+          if(status==="OK" && res.routes[0]){ var leg=res.routes[0].legs[0];
+            d.mins=Math.round(((leg.duration_in_traffic||leg.duration).value)/60);
+            d.kmReal=leg.distance.value/1000; d._route=res; }
+          if(--pending===0 && done) done();
+        });
+    });
+  }
+
+  function drawRoute(d){
+    if(!gmReady) return;
+    if(d._route){
+      dirRenderer.setOptions({ polylineOptions:{ strokeColor:isFood[d.id]?"#8C9AA6":"#CBD5DD", strokeWeight:4, strokeOpacity:.9 } });
+      dirRenderer.setDirections(d._route);
+    } else {
+      dirService.route({ origin:ORIGIN.ll, destination:d.ll, travelMode:google.maps.TravelMode.DRIVING }, function(res,status){
+        if(status==="OK"){ d._route=res; dirRenderer.setDirections(res); } });
+    }
+    var b=new google.maps.LatLngBounds(); b.extend(ORIGIN.ll); b.extend(d.ll);
+    map.fitBounds(b,{top:70,bottom:60,left:60,right:60});
+  }
+
+  // =========================== WEATHER (Open-Meteo) ===========================
+  var wxCache={};
+  function wxEmoji(code,rain){ if(rain>=60) return "🌧️"; if(code>=95) return "⛈️"; if(code>=51) return "🌦️"; if(code>=45) return "🌫️"; if(code>=2) return "⛅"; if(code>=1) return "🌤️"; return "☀️"; }
+  function loadWeather(d){
+    var chip=document.getElementById('wxchip'), val=document.getElementById('wxVal'), ic=document.getElementById('wxIc');
+    chip.style.display='flex'; val.textContent='cargando…'; ic.textContent='⏳';
+    function paint(w){ ic.textContent=w.emoji;
+      val.innerHTML=w.temp+'°C · <small>lluvia '+w.rain+'%</small>'+(d.covered?' <small style="color:var(--lime)">· techada</small>':'');
+      var rf=document.getElementById('rainFact'); if(rf && d.id===(sortedCourts()[0]||{}).id) rf.textContent=w.rain+'%';
+    }
+    if(wxCache[d.id]){ paint(wxCache[d.id]); return; }
+    var u="https://api.open-meteo.com/v1/forecast?latitude="+d.ll.lat+"&longitude="+d.ll.lng+
+      "&hourly=temperature_2m,precipitation_probability,weather_code&timezone=America%2FCosta_Rica&start_date="+PLAY_DATE+"&end_date="+PLAY_DATE;
+    fetch(u).then(function(r){return r.json();}).then(function(j){
+      var h=j.hourly, i=PLAY_HOUR;
+      var temp=Math.round(h.temperature_2m[i]), rain=h.precipitation_probability[i], code=h.weather_code[i];
+      var w={ temp:temp, rain:rain, code:code, emoji:wxEmoji(code,rain) }; wxCache[d.id]=w; paint(w);
+    }).catch(function(){ val.textContent='no disponible'; ic.textContent='⛅'; });
+  }
+  // clima global para el hero fact = mejor cancha
+  function primeHeroWeather(){ var best=sortedCourts()[0]; if(best) loadWeather(best); }
+
+  // =========================== LIST / RANKING RENDER ===========================
+  var listEl=document.getElementById('clubList');
+  function sortedCourts(){
+    var c=COURTS.slice();
+    if(sortMode==="dist") c.sort(function(a,b){ return (a.mins||a.km*2)-(b.mins||b.km*2); });
+    else if(sortMode==="price") c.sort(function(a,b){ return a.priceCourt-b.priceCourt; });
+    else if(sortMode==="rating") c.sort(function(a,b){ return b.rating-a.rating; });
+    else c.sort(function(a,b){ return b.score-a.score; });
+    return c;
+  }
+  function distLabel(d){ if(d.mins!=null) return d.mins; return Math.round(d.km*2.3); }
+  function distUnit(d){ return d.mins!=null?"min manejo":"min aprox"; }
+  function renderList(){
+    var arr=sortedCourts(); listEl.innerHTML='';
+    arr.forEach(function(d,i){
+      var b=document.createElement('button'); b.type='button'; b.className='club'; b.setAttribute('aria-selected', d.id===state.courtId?'true':'false');
+      b.dataset.id=d.id; b.dataset.rank=(sortMode==="score")?(i+1):"";
+      var rankTxt=(sortMode==="score")?(i+1):(i+1);
+      b.innerHTML='<span class="rk">'+rankTxt+'</span>'+
+        '<span class="cbody"><span class="cname">'+d.name+(d.covered?' <span class="badge cov">Techada</span>':'')+'</span>'+
+        '<span class="cmeta">'+d.area+' — '+d.meta+'</span>'+
+        '<span class="crow">'+
+          '<span class="chip"><span class="stars">'+stars(d.rating)+'</span> <b>'+d.rating.toFixed(1)+'</b></span>'+
+          '<span class="chip">💵 <b>$'+d.priceCourt+'</b>/cancha · ~$'+perPlayer(d)+' c/u</span>'+
+          '<span class="chip">🎾 <b>'+d.courts+'</b> pistas</span>'+
+        '</span>'+
+        '<span class="clinks">'+
+          '<a href="'+d.book+'" target="_blank" rel="noopener">Reservar ↗</a>'+
+          '<a href="https://www.google.com/maps/dir/?api=1&origin='+ORIGIN.ll.lat+','+ORIGIN.ll.lng+'&destination='+encodeURIComponent(d.name+' '+d.area)+'&travelmode=driving" target="_blank" rel="noopener">Cómo llegar</a>'+
+          (d.wa?'<a href="https://wa.me/'+d.wa+'" target="_blank" rel="noopener">WhatsApp</a>':'')+
+        '</span></span>'+
+        '<span class="cdist"><b class="tnum">'+distLabel(d)+'</b><small>'+distUnit(d)+'</small></span>';
+      b.addEventListener('click',function(ev){ if(ev.target.closest('a')) return; selectItem(d.id); });
+      listEl.appendChild(b);
+    });
+    var rf=document.getElementById('rainFact'); primeHeroWeather();
+  }
+
+  // sort buttons
+  document.getElementById('sortbar').addEventListener('click',function(e){
+    var btn=e.target.closest('button'); if(!btn) return;
+    sortMode=btn.dataset.sort;
+    this.querySelectorAll('button').forEach(function(b){ b.setAttribute('aria-pressed', b===btn?'true':'false'); });
+    renderList();
+  });
+
+  // food cards
+  var foodEl=document.getElementById('foodGrid');
+  FOOD.forEach(function(d){ var c=document.createElement('div'); c.className='food glass'; c.setAttribute('role','button'); c.setAttribute('tabindex','0'); c.setAttribute('aria-selected','false'); c.dataset.id=d.id;
+    c.innerHTML='<div class="frow"><div class="fk">'+d.kind+'</div><div class="fpr">'+d.price+'</div></div>'+
+      '<h3>'+d.name+'</h3><div class="fz">'+d.zone+'</div>'+
+      '<div class="fmeta"><span class="stars">'+stars(d.rating)+'</span><span>'+d.rating.toFixed(1)+'</span></div>'+
+      '<p>'+d.desc+'</p>'+
+      '<a class="fl" href="https://www.google.com/maps/search/?api=1&query='+encodeURIComponent(d.map)+'" target="_blank" rel="noopener">Ver dónde queda ↗</a>';
+    c.addEventListener('click',function(ev){ if(ev.target.closest('a')) return; selectItem(d.id); });
+    c.addEventListener('keydown',function(ev){ if(ev.target.closest('a')) return; if(ev.key==='Enter'||ev.key===' '){ ev.preventDefault(); selectItem(d.id); } }); foodEl.appendChild(c); });
+
+  // selects
+  var fCourt=document.getElementById('fCourt'),fFood=document.getElementById('fFood');
+  COURTS.forEach(function(d){ var o=document.createElement('option'); o.value=d.id; o.textContent=d.name; fCourt.appendChild(o); });
+  FOOD.forEach(function(d){ var o=document.createElement('option'); o.value=d.id; o.textContent=d.name+' — '+d.zone; fFood.appendChild(o); });
+
+  function selectItem(id, silent){ var d=ALL[id]; if(!d) return;
+    if(isFood[id]){ state.foodId=id; state.food=d.name; fFood.value=id;
+      foodEl.querySelectorAll('.food').forEach(function(c){ c.setAttribute('aria-selected',c.dataset.id===id?'true':'false'); });
+      drawRoute(d);
+    } else { state.courtId=id; state.court=d.name; fCourt.value=id;
+      listEl.querySelectorAll('.club').forEach(function(c){ c.setAttribute('aria-selected',c.dataset.id===id?'true':'false'); });
+      drawRoute(d); loadWeather(d);
+      var sc=listEl.querySelector('.club[data-id="'+id+'"]'); if(sc && !silent) sc.scrollIntoView({block:'nearest',behavior:reduce?'auto':'smooth'});
+    }
+    save(); render(); }
+
+  // tour
+  var tourBtn=document.getElementById('tourBtn'),touring=false,timers=[];
+  tourBtn.addEventListener('click',function(){ if(touring){ timers.forEach(clearTimeout); timers=[]; touring=false; tourBtn.textContent='Ver todas'; return; }
+    touring=true; tourBtn.textContent='Parar'; var arr=sortedCourts();
+    arr.forEach(function(d,i){ timers.push(setTimeout(function(){ selectItem(d.id); if(i===arr.length-1) timers.push(setTimeout(function(){ touring=false; tourBtn.textContent='Ver todas'; },2600)); }, i*2600)); }); });
+
+  // form
+  var fName=document.getElementById('fName'),fTime=document.getElementById('fTime'),fAgree=document.getElementById('fAgree'),fNote=document.getElementById('fNote'),fWebsite=document.getElementById('fWebsite');
+  fName.addEventListener('input',function(){ state.name=fName.value.trim(); save(); render(); });
+  fTime.addEventListener('change',function(){ state.time=fTime.value; save(); render(); });
+  fNote.addEventListener('input',function(){ state.note=fNote.value.trim(); save(); });
+  fCourt.addEventListener('change',function(){ if(fCourt.value) selectItem(fCourt.value); else { state.court='';state.courtId=''; render(); } });
+  fFood.addEventListener('change',function(){ if(fFood.value) selectItem(fFood.value); else { state.food='';state.foodId=''; render(); } });
+  fAgree.addEventListener('change',function(){ state.agree=fAgree.checked; save(); render(); });
+
+  var sv={}; document.querySelectorAll('#summary .v').forEach(function(e){ sv[e.dataset.k]=e; });
+  var sendBtn=document.getElementById('sendBtn'),copyBtn=document.getElementById('copyBtn'),hint=document.getElementById('hint');
+  function set(k,val,empty){ var e=sv[k]; if(!e) return; e.textContent=val; e.classList.toggle('empty',!!empty); }
+  function render(){ set('name',state.name||'Sin llenar',!state.name); set('time',state.time,false);
+    set('court',state.court||'Sin elegir',!state.court); set('food',state.food||'Sin elegir',!state.food);
+    set('agree',state.agree?'Confirmado':'Pendiente',!state.agree);
+    var ready=state.name&&state.agree; sendBtn.disabled=!ready;
+    hint.classList.remove('err');
+    hint.textContent=ready?'Todo listo — le llega la respuesta a Nelson al toque.':(!state.name?'Ponga su nombre para confirmar.':'Active “Ahí estaré”.'); }
+
+  function save(){ try{ localStorage.setItem('padelViernes4',JSON.stringify(state)); }catch(e){} }
+  function load(){ try{ var s=JSON.parse(localStorage.getItem('padelViernes4')); if(!s) return; state=Object.assign(state,s);
+    fName.value=state.name||''; fTime.value=state.time||fTime.value; fAgree.checked=!!state.agree; fNote.value=state.note||'';
+    if(state.foodId&&ALL[state.foodId]) fFood.value=state.foodId; if(state.courtId&&ALL[state.courtId]) fCourt.value=state.courtId; }catch(e){} }
+
+  function msg(){ return "¡Me apunto al viernes de pádel!\n\nFecha: viernes 31 de julio\nNombre: "+state.name+"\nLlego: "+state.time+
+    "\nCancha: "+(state.court||"la que salga")+"\nDespués: "+(state.food||"donde el grupo decida")+
+    (state.note?"\nNota: "+state.note:"")+"\nEstado: "+(state.agree?"CONFIRMADO":"por confirmar")+"\n"; }
+
+  function payload(){ return { name:state.name, time:state.time, court:state.court, food:state.food, note:state.note, agree:state.agree, website:fWebsite.value }; }
+  function w3fPayload(){ return {
+    access_key:W3F_KEY, from_name:"Viernes de Pádel · Dole",
+    subject:"🎾 Pádel · "+state.name+" — "+(state.agree?"CONFIRMADO":"por confirmar"),
+    Nombre:state.name, Estado:(state.agree?"CONFIRMADO ✅":"Por confirmar"), Llega:state.time,
+    Cancha_preferida:(state.court||"la que salga"), Despues_van_a:(state.food||"donde el grupo decida"),
+    Nota:(state.note||"—"), botcheck:fWebsite.value }; }
+
+  sendBtn.addEventListener('click',function(){ if(sendBtn.disabled) return;
+    sendBtn.disabled=true; var orig=sendBtn.innerHTML; sendBtn.innerHTML='<span class="spin"></span>Enviando…';
+    // 1) guardar en el droplet (para el feed en vivo) — best effort, no bloquea
+    fetch(API+"/submit",{ method:"POST", headers:{"Content-Type":"application/json"}, body:JSON.stringify(payload()) })
+      .then(function(){ loadFeed(); }).catch(function(){});
+    // 2) enviar el correo a Nelson via Web3Forms (client-side) — es el criterio de éxito
+    fetch("https://api.web3forms.com/submit",{ method:"POST",
+        headers:{"Content-Type":"application/json","Accept":"application/json"}, body:JSON.stringify(w3fPayload()) })
+      .then(function(r){ return r.json(); })
+      .then(function(res){ if(!res||!res.success) throw new Error(res&&res.message||"fail"); onSent(); })
+      .catch(function(){
+        sendBtn.innerHTML=orig; sendBtn.disabled=false;
+        hint.classList.add('err'); hint.textContent='No pude enviar automáticamente — abro tu correo como respaldo.';
+        window.location.href="mailto:"+ORG+"?subject="+encodeURIComponent("Pádel · viernes 31 — "+state.name)+"&body="+encodeURIComponent(msg());
+      });
+  });
+  function onSent(){
+    document.getElementById('ctaZone').innerHTML='<div class="done"><div class="dt">Nos vemos en la <em>cancha</em></div>'+
+      '<p class="hint">Tu respuesta ya le llegó a Nelson. ¡Gracias!</p></div>'+
+      '<button class="btn line full" id="again" type="button" style="margin-top:14px">Editar mi respuesta</button>';
+    document.getElementById('again').addEventListener('click',function(){ location.reload(); });
+  }
+  copyBtn.addEventListener('click',function(){ var t=msg();
+    var ok=function(){ copyBtn.textContent='¡Copiado!'; setTimeout(function(){ copyBtn.textContent='Copiar mi respuesta'; },1600); };
+    if(navigator.clipboard&&navigator.clipboard.writeText){ navigator.clipboard.writeText(t).then(ok,ok); } else { var ta=document.createElement('textarea'); ta.value=t; document.body.appendChild(ta); ta.select(); try{document.execCommand('copy');}catch(e){} ta.remove(); ok(); } });
+
+  // =========================== LIVE FEED ===========================
+  var feedChips=document.getElementById('feedChips'), cCount=document.getElementById('cCount');
+  function loadFeed(){
+    fetch(API+"/list").then(function(r){return r.json();}).then(function(j){
+      var ppl=(j&&j.people)||[]; var going=ppl.filter(function(p){return p.agree;});
+      cCount.textContent=going.length;
+      if(!ppl.length){ feedChips.innerHTML='<span class="empty">Sé el primero en confirmar 👀</span>'; return; }
+      feedChips.innerHTML='';
+      ppl.slice(0,14).forEach(function(p){ var s=document.createElement('span'); s.className='pchip';
+        var court=p.court?(' · '+p.court):''; s.innerHTML='<span class="av">'+(p.name[0]||'?').toUpperCase()+'</span>'+p.name+(p.agree?'':' <small>(quizá)</small>')+'<small>'+court+'</small>';
+        feedChips.appendChild(s); });
+    }).catch(function(){});
+  }
+  loadFeed(); setInterval(loadFeed, 15000);
+
+  // =========================== COUNTDOWN ===========================
+  var cd=document.getElementById('cd'); var TARGET=new Date("2026-07-31T16:45:00-06:00");
+  function tick(){ var s=Math.max(0,Math.floor((TARGET-new Date())/1000));
+    var d=Math.floor(s/86400), h=Math.floor(s%86400/3600), m=Math.floor(s%3600/60);
+    cd.textContent = s<=0 ? "¡hoy!" : (d>0? d+"d "+h+"h" : h+"h "+m+"m"); }
+  tick(); setInterval(tick,60000);
+
+  // reveal + counters
+  function runCount(el){ var target=+el.dataset.count; if(isNaN(target)) return; var t0=null,dur=900;
+    function s(ts){ if(t0===null)t0=ts; var p=Math.min(1,(ts-t0)/dur); el.textContent=Math.round(target*p); if(p<1) requestAnimationFrame(s); } requestAnimationFrame(s); }
+  if('IntersectionObserver' in window){ var io=new IntersectionObserver(function(es){ es.forEach(function(e){ if(e.isIntersecting){ e.target.classList.add('in');
+    e.target.querySelectorAll('[data-count]').forEach(function(c){ if(!reduce) runCount(c); }); io.unobserve(e.target); } }); },{threshold:.14});
+    document.querySelectorAll('.reveal').forEach(function(e){ io.observe(e); }); }
+  else { document.querySelectorAll('.reveal').forEach(function(e){ e.classList.add('in'); }); }
+
+  // nav shrink + spotlight
+  var nav=document.getElementById('nav');
+  addEventListener('scroll',function(){ nav.classList.toggle('stuck', scrollY>40); },{passive:true});
+  var spot=document.getElementById('spot');
+  if(!reduce && matchMedia('(pointer:fine)').matches){ var tx=innerWidth/2,ty=innerHeight/2,cx=tx,cy=ty;
+    addEventListener('mousemove',function(e){ spot.style.opacity='1'; tx=e.clientX; ty=e.clientY; });
+    (function f(){ cx+=(tx-cx)*.08; cy+=(ty-cy)*.08; spot.style.left=cx+'px'; spot.style.top=cy+'px'; requestAnimationFrame(f); })(); }
+
+  // init (pre-map: score by haversine so list shows immediately)
+  computeScores(); renderList(); render(); load(); render();
+
+  // ---- cargar llaves desde el droplet, luego Google Maps ----
+  (function(){
+    fetch(API+"/config").then(function(r){ return r.json(); }).then(function(c){
+      GMAPS_KEY=(c&&c.gmapsKey)||""; W3F_KEY=(c&&c.w3fKey)||"";
+      if(!GMAPS_KEY){ window.gmError(); return; }
+      var s=document.createElement('script');
+      s.src="https://maps.googleapis.com/maps/api/js?key="+encodeURIComponent(GMAPS_KEY)+"&callback=initMap&loading=async";
+      s.async=true; s.defer=true; s.onerror=window.gmError; document.head.appendChild(s);
+    }).catch(function(){ window.gmError(); });
+  })();
+})();
+</script>
+</body>
+</html>
