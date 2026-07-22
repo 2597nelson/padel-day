@@ -295,9 +295,10 @@
   @keyframes up{ to{ opacity:1; transform:none; } }
 
   /* ============ MOBILE ============ */
-  #map{ scroll-margin-top:64px; }
+  #map{ scroll-margin-top:74px; }
   @media (max-width:768px){
     body{ font-size:16px; }
+    .nav .wrap{ padding:13px 16px; }
     section{ padding:52px 0; }
     .wrap{ padding:0 16px; }
     .sec-desc{ font-size:1rem; }
@@ -318,7 +319,7 @@
 
     /* mapa fijo: queda visible mientras se elige en la lista */
     .map-wrap{ overflow:visible; border:0; box-shadow:none; background:transparent; margin-top:20px; }
-    .map-cell{ position:sticky; top:54px; z-index:6; border-radius:16px; overflow:hidden;
+    .map-cell{ position:sticky; top:66px; z-index:6; border-radius:16px; overflow:hidden;
       border:1px solid var(--line); box-shadow:0 24px 48px -26px rgba(0,0,0,.85); }
     #map{ height:290px; }
     .map-side{ border-left:0; border:1px solid var(--line); border-top:0; border-radius:0 0 16px 16px; margin-top:10px; background:var(--glass-2); }
