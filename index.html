@@ -267,13 +267,15 @@
   .summary .row .v.empty{ color:var(--ink-mute); font-weight:300; }
 
   .agree{ display:flex; gap:14px; align-items:center; margin:24px 0 20px; }
-  .switch{ position:relative; width:56px; height:31px; flex:none; }
-  .switch input{ position:absolute; inset:0; opacity:0; margin:0; cursor:pointer; }
+  .switch{ position:relative; width:62px; height:34px; flex:none; }
+  .switch input{ -webkit-appearance:none; appearance:none; position:absolute; inset:0; width:100%; height:100%; opacity:0; margin:0; cursor:pointer; z-index:2; }
   .switch .tr{ position:absolute; inset:0; border:1px solid var(--line); border-radius:999px; background:rgba(8,10,12,.6); transition:.25s; pointer-events:none; }
-  .switch .kn{ position:absolute; top:4px; left:4px; width:21px; height:21px; border-radius:50%; background:var(--ink-mute); transition:.25s; pointer-events:none; }
-  .switch input:checked ~ .tr{ background:var(--lime); border-color:var(--lime); }
-  .switch input:checked ~ .kn{ transform:translateX(25px); background:#14171A; }
+  .switch .kn{ position:absolute; top:4px; left:4px; width:24px; height:24px; border-radius:50%; background:var(--ink-mute); transition:transform .25s cubic-bezier(.34,1.56,.64,1), background .25s; pointer-events:none; display:flex; align-items:center; justify-content:center; font:700 .72rem/1 sans-serif; color:transparent; }
+  .switch input:checked ~ .tr{ background:var(--lime); border-color:var(--lime); box-shadow:0 0 16px rgba(198,242,78,.45); }
+  .switch input:checked ~ .kn{ transform:translateX(28px); background:#14171A; color:var(--lime); }
+  .switch input:checked ~ .kn::after{ content:"✓"; }
   .switch input:focus-visible ~ .tr{ outline:2px solid var(--lime); outline-offset:2px; }
+  .agree.on .lbl{ color:var(--lime); }
   .agree .lbl{ font-family:var(--disp); font-weight:400; font-size:1.2rem; cursor:pointer; }
   .agree .lbl small{ display:block; font-family:var(--sans); font-weight:400; font-size:.86rem; color:var(--ink-soft); letter-spacing:0; margin-top:2px; }
 
@@ -768,6 +770,7 @@
   function render(){ set('name',state.name||'Sin llenar',!state.name); set('time',state.time,false);
     set('court',state.court||'Sin elegir',!state.court); set('food',state.food||'Sin elegir',!state.food);
     set('agree',state.agree?'Confirmado':'Pendiente',!state.agree);
+    var ag=document.querySelector('.agree'); if(ag) ag.classList.toggle('on',state.agree);
     var ready=state.name&&state.agree; sendBtn.disabled=!ready;
     hint.classList.remove('err');
     hint.textContent=ready?'Todo listo — le llega la respuesta a Nelson al toque.':(!state.name?'Ponga su nombre para confirmar.':'Active “Ahí estaré”.'); }
