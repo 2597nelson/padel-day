@@ -294,6 +294,62 @@
 
   @keyframes up{ to{ opacity:1; transform:none; } }
 
+  /* ============ MOBILE ============ */
+  #map{ scroll-margin-top:64px; }
+  @media (max-width:768px){
+    body{ font-size:16px; }
+    section{ padding:52px 0; }
+    .wrap{ padding:0 16px; }
+    .sec-desc{ font-size:1rem; }
+    .kick{ margin-bottom:14px; }
+
+    .hero{ padding:100px 0 64px; min-height:auto; }
+    .hero-sub{ gap:8px; margin-top:28px; }
+    .stat{ min-width:0; flex:1 1 45%; padding:12px 14px; }
+    .stat .v{ font-size:1.4rem; }
+    .hero-lead{ font-size:1rem; }
+    .hero-actions{ gap:10px; }
+    .hero-actions .btn{ flex:1 1 100%; text-align:center; }
+
+    .sortbar{ flex-wrap:nowrap; overflow-x:auto; -webkit-overflow-scrolling:touch;
+      scrollbar-width:none; padding-bottom:6px; margin-left:-16px; margin-right:-16px; padding-left:16px; padding-right:16px; }
+    .sortbar::-webkit-scrollbar{ display:none; }
+    .sortbar button{ flex:none; padding:11px 18px; }
+
+    /* mapa fijo: queda visible mientras se elige en la lista */
+    .map-wrap{ overflow:visible; border:0; box-shadow:none; background:transparent; margin-top:20px; }
+    .map-cell{ position:sticky; top:54px; z-index:6; border-radius:16px; overflow:hidden;
+      border:1px solid var(--line); box-shadow:0 24px 48px -26px rgba(0,0,0,.85); }
+    #map{ height:290px; }
+    .map-side{ border-left:0; border:1px solid var(--line); border-top:0; border-radius:0 0 16px 16px; margin-top:10px; background:var(--glass-2); }
+    .clublist{ max-height:none; }
+    .club{ padding:18px 16px; gap:12px; }
+    .club .rk{ width:30px; height:30px; }
+    .club .cname{ font-size:1.14rem; }
+    .club .cmeta{ font-size:.82rem; }
+    .club .clinks a{ padding:9px 13px; font-size:.74rem; }
+    .club .cdist b{ font-size:1.2rem; }
+    .mapchips{ right:10px; top:10px; gap:8px; }
+    .wxchip{ min-width:0; padding:9px 12px; }
+    .wxchip .ic{ font-size:1.4rem; }
+    .wxchip .wk{ font-size:.52rem; }
+    .wxchip .wv{ font-size:1rem; }
+
+    .timeline{ grid-template-columns:1fr 1fr; gap:12px; }
+    .tl{ padding:20px 18px; }
+    .food-grid{ gap:14px; margin-top:32px; }
+    .food{ padding:20px; }
+
+    /* formulario: tap targets + sin zoom iOS */
+    .field input, .field select, .field textarea{ font-size:16px; padding:15px 14px; }
+    .btn{ padding:16px 24px; font-size:1rem; }
+    .switch{ width:66px; height:37px; }
+    .switch .kn{ width:27px; height:27px; }
+    .switch input:checked ~ .kn{ transform:translateX(29px); }
+    .agree .lbl{ font-size:1.1rem; }
+    .feed{ padding:14px 16px; }
+  }
+
   /* google maps info window dark */
   .gm-style .gm-style-iw-c{ background:var(--bg2)!important; border:1px solid var(--line); border-radius:12px!important; box-shadow:0 20px 50px -20px rgba(0,0,0,.8)!important; padding:0!important; }
   .gm-style .gm-style-iw-tc::after{ background:var(--bg2)!important; }
@@ -730,8 +786,9 @@
       '<div class="fmeta"><span class="stars">'+stars(d.rating)+'</span><span>'+d.rating.toFixed(1)+'</span></div>'+
       '<p>'+d.desc+'</p>'+
       '<a class="fl" href="https://www.google.com/maps/search/?api=1&query='+encodeURIComponent(d.map)+'" target="_blank" rel="noopener">Ver dónde queda ↗</a>';
-    c.addEventListener('click',function(ev){ if(ev.target.closest('a')) return; selectItem(d.id); });
-    c.addEventListener('keydown',function(ev){ if(ev.target.closest('a')) return; if(ev.key==='Enter'||ev.key===' '){ ev.preventDefault(); selectItem(d.id); } }); foodEl.appendChild(c); });
+    function pickFood(){ selectItem(d.id); if(innerWidth<=768){ var m=document.getElementById('map'); if(m) m.scrollIntoView({behavior:reduce?'auto':'smooth',block:'start'}); } }
+    c.addEventListener('click',function(ev){ if(ev.target.closest('a')) return; pickFood(); });
+    c.addEventListener('keydown',function(ev){ if(ev.target.closest('a')) return; if(ev.key==='Enter'||ev.key===' '){ ev.preventDefault(); pickFood(); } }); foodEl.appendChild(c); });
 
   // selects
   var fCourt=document.getElementById('fCourt'),fFood=document.getElementById('fFood');
