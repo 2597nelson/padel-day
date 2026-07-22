@@ -171,7 +171,8 @@
     text-transform:uppercase; letter-spacing:.1em; font-size:.62rem; font-weight:600; pointer-events:none; }
   .map-legend .lg{ display:flex; align-items:center; gap:6px; color:var(--ink-soft); }
   .map-legend .d{ width:9px; height:9px; border-radius:50%; }
-  .wxchip{ position:absolute; right:14px; top:14px; z-index:5; display:flex; align-items:center; gap:11px; padding:11px 15px; border-radius:12px;
+  .mapchips{ position:absolute; right:14px; top:14px; z-index:5; display:flex; flex-direction:column; gap:10px; align-items:flex-end; }
+  .wxchip{ display:flex; align-items:center; gap:11px; padding:11px 15px; border-radius:12px;
     background:rgba(12,14,16,.82); -webkit-backdrop-filter:blur(10px); backdrop-filter:blur(10px); border:1px solid var(--line); min-width:190px; }
   .wxchip .ic{ font-size:1.7rem; line-height:1; }
   .wxchip .wk{ text-transform:uppercase; letter-spacing:.14em; font-size:.56rem; color:var(--ink-mute); font-weight:700; }
@@ -395,7 +396,10 @@
       <div class="map-cell">
         <div id="map" role="application" aria-label="Mapa de canchas de pádel"></div>
         <div class="map-fallback" id="mapFallback">Cargando el mapa…</div>
-        <div class="wxchip glass" id="wxchip" style="display:none"><span class="ic" id="wxIc">⛅</span><div><div class="wk">Clima en la cancha · 5:30pm</div><div class="wv" id="wxVal">—</div></div></div>
+        <div class="mapchips">
+          <div class="wxchip glass" id="routeInfo" style="display:none"><span class="ic">🚗</span><div><div class="wk">Manejo desde Dole</div><div class="wv" id="routeVal">—</div></div></div>
+          <div class="wxchip glass" id="wxchip" style="display:none"><span class="ic" id="wxIc">⛅</span><div><div class="wk">Clima en la cancha · 5:30pm</div><div class="wv" id="wxVal">—</div></div></div>
+        </div>
         <div class="map-legend">
           <span class="lg"><span class="d" style="background:#EDEFF1"></span>Salida</span>
           <span class="lg"><span class="d" style="background:var(--silver)"></span>Cancha</span>
@@ -617,16 +621,22 @@
 
   function fetchDriveTimes(done){
     var pending=COURTS.length;
-    var opts=(DEPART>new Date())?{ departureTime:DEPART, trafficModel:google.maps.TrafficModel.BEST_GUESS }:null;
     COURTS.forEach(function(d){
-      dirService.route({ origin:ORIGIN.ll, destination:d.ll, travelMode:google.maps.TravelMode.DRIVING, drivingOptions:opts||undefined },
+      dirService.route({ origin:ORIGIN.ll, destination:d.ll, travelMode:google.maps.TravelMode.DRIVING },
         function(res,status){
-          if(status==="OK" && res.routes[0]){ var leg=res.routes[0].legs[0];
-            d.mins=Math.round(((leg.duration_in_traffic||leg.duration).value)/60);
+          if(status==="OK" && res.routes && res.routes[0]){ var leg=res.routes[0].legs[0];
+            d.mins=Math.round(leg.duration.value/60);
             d.kmReal=leg.distance.value/1000; d._route=res; }
-          if(--pending===0 && done) done();
+          if(--pending===0){ if(done) done(); if(state.courtId&&ALL[state.courtId]) showRouteInfo(ALL[state.courtId]); }
         });
     });
+  }
+  function showRouteInfo(d){
+    var el=document.getElementById('routeInfo'), val=document.getElementById('routeVal');
+    if(!el) return;
+    if(isFood[d.id]){ el.style.display='none'; return; }
+    if(d.mins!=null){ el.style.display='flex'; val.innerHTML=d.mins+' min · <small>'+(d.kmReal||d.km).toFixed(1)+' km</small>'; }
+    else { el.style.display='flex'; val.innerHTML='~'+Math.round(d.km*2.3)+' min · <small>calculando…</small>'; }
   }
 
   function drawRoute(d){
@@ -729,10 +739,10 @@
   function selectItem(id, silent){ var d=ALL[id]; if(!d) return;
     if(isFood[id]){ state.foodId=id; state.food=d.name; fFood.value=id;
       foodEl.querySelectorAll('.food').forEach(function(c){ c.setAttribute('aria-selected',c.dataset.id===id?'true':'false'); });
-      drawRoute(d);
+      drawRoute(d); var ri=document.getElementById('routeInfo'); if(ri) ri.style.display='none';
     } else { state.courtId=id; state.court=d.name; fCourt.value=id;
       listEl.querySelectorAll('.club').forEach(function(c){ c.setAttribute('aria-selected',c.dataset.id===id?'true':'false'); });
-      drawRoute(d); loadWeather(d);
+      drawRoute(d); loadWeather(d); showRouteInfo(d);
       var sc=listEl.querySelector('.club[data-id="'+id+'"]'); if(sc && !silent) sc.scrollIntoView({block:'nearest',behavior:reduce?'auto':'smooth'});
     }
     save(); render(); }
